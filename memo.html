@@ -23,6 +23,11 @@
 <li><a href="#createproj">2. プロジェクトの作成</a>
 <li><a href="#commitproj">3. プロジェクトのコミット</a>
 <li><a href="#importproj">4. プロジェクトのインポート</a>
+<li><a href="#createapi">4. REST APIの作成</a>
+<ul>
+    <li><a href="#configurepom">4.1 pom.xmlの設定</a>
+    <li><a href="#configureyaml">4.2 application.yamlの設定</a>
+</ul>
 </div>
 </div>
 <div id="content">
@@ -262,6 +267,48 @@
                
     </ol>
 </ul>
+<h2 id="createapi"><a class="anchor" href="#createapi"></a>4. REST APIの作成</h2>
+<ul>
+    <h3 id="initset"><a class="anchor" href="#initset"></a>4.1 初期設定</h2>
+    <ul>
+         <h3 id="configurepom"><a class="anchor" href="#configurepom"></a>4.1.1 pom.xmlの設定</h2>
+        以下の定義をpom.xmlに設定する。
+        <pre><code>
+            &lt;dependency&gt;
+                &lt;groupId&gt;com.github.dozermapper&lt;/groupId&gt;
+                &lt;artifactId&gt;dozer-spring-boot-starter&lt;/artifactId&gt;
+                &lt;version&gt;6.5.0&lt;/version&gt;
+            &lt;/dependency&gt;
+            ↑↑  オブジェクトからオブジェクトにデータをコピーするマッピングフレームワーク。
+                コピー元からコピー先に同じ属性値がある限り、値をコピーする。この際、型が異なる場合は自動変換してくれる。
+                通常、このような処理を行うにはgetterメソッドとsetterメソッドの呼び出しが必要だが、Dozerを利用することで
+                コードを簡略化できる。  　　
+            &lt;dependency&gt;
+                &lt;groupId&gt;org.mybatis.spring.boot&lt;/groupId&gt;
+                &lt;artifactId&gt;mybatis-spring-boot-starter-test&lt;/artifactId&gt;
+                &lt;version&gt;2.1.0&lt;/version&gt;
+                &lt;scope&gt;test&lt;/scope&gt;
+            &lt;/dependency&gt;
+            ↑↑ MyBatisの機能をテストするライブラリ   
+        </code></pre>
+    </ul>
+    <ul>
+        <h3 id="configureyaml"><a class="anchor" href="#configureyaml"></a>4.1.2 application.ymlの設定</h2>  
+            application.yamlでSpring Boot起動時に生成されるBeanの設定を変更することで、アプリケーションのプロパティ設定を行うことが出来る。
+            ログ出力のプロパティ設定、トランザクションのプロパティ設定、データのプロパティ設定などを変更出来る。
+            <br>
+            参考：<a href="https://spring.pleiades.io/spring-boot/docs/current/reference/html/application-properties.html">アプリケーションプロパティ設定一覧</a>
+            <br>
+            今回は以下の通り、MybatisのSnakeCaseで定義されたカラム名をCamelCaseに変換(例：camel-case→camelCase)し、Formオブジェクトのプロパティ名とデータベースのカラム名をマッピングする設定を有効化する。
+            (yaml形式で記述するため、src/main/resources/下にあるapplication.propertiesをapplication.ymlにリネームした上で設定を記述する。)
+            <pre><code>
+                mybatis:
+                  configuration:
+                    mapUnderscoreToCamelCase: true
+            </code></pre>
+    </ul>
+</ul>
+
 </div>
 </div>
 </body>
