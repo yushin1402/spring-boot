@@ -34,6 +34,16 @@
     <li><a href="#createsrcfld">5.3. ソースフォルダの作成</a>
     <li><a href="#createtodo">5.4. Todoクラスの作成</a>
     <li><a href="#createtodoresrc">5.5. TodoResourceクラスの作成</a>
+    <li><a href="#createtorepo">5.6. Repositoryクラスの作成</a>
+    <ul>
+        <li><a href="#createtable">5.6.1 テーブルの作成</a>
+        <li><a href="#createtodorepository">5.6.2 TodoRepositoryインターフェースの作成</a>
+        <li><a href="#testrepo">5.6.3 Repositoryの単体テスト</a>
+        <ul>
+            <li><a href="#createinitdata">5.6.3.1 初期データの作成</a>
+            <li><a href="#createtest">5.6.3.2 Spring Testの標準機能を利用したTestの実装</a>
+        </ul>
+    </ul>
 </ul>
 
 </div>
@@ -490,7 +500,150 @@
                     &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
                     &lt;artifactId&gt;spring-boot-starter-validation&lt;/artifactId&gt;
               &lt;/dependency&gt;
-            </code></pre>
+            </code></pre>   
+            <h2 id="createrepo"><a class="anchor" href="#createrepo"></a>5.6 Repositoryクラスの作成</h2>
+            MyBaticを利用してデータベースアクセスを行うための実装と設定を行う。
+            <ul>
+                <h2 id="createtable"><a class="anchor" href="#createtable"></a>5.6.1 テーブルの作成</h2>
+                H2を利用する。H2についてはデフォルトでデータソース設定済みのため、そのまま利用出来る。
+                その他のデータベース(Postgresなど)を利用する場合は「application.yaml」で接続設定を行う。
+                <br>
+                todoターブルを作成するSQLファイルを作成する。
+                <table width=500>
+                    <tr>
+                        <th>項目名</th>
+                        <th>設定値</th>
+                    </tr>
+                    <tr>
+                        <td>親フォルダ</td>
+                        <td>turorial/src/main/resources</td>
+                    </tr>
+                    <tr>
+                       <td>ファイル名</td>
+                       <td>schema.sql</td>
+                   </tr>
+                </table>
+                作成したファイルに以下のSQLを記述する。
+                <pre><code>
+                    CREATE TABLE IF NOT EXISTS todo (
+                        todo_id BIGINT IDENTITY PRIMARY KEY,
+                        todo_title VARCHAR(30),
+                        finished BOOLEAN,
+                        created_at TIMESTAMP
+                      );                    
+                </code></pre>
+                <h2 id="createtodorepo"><a class="anchor" href="#createtodorepo"></a>5.6.2 TodoRepositoryインターフェースの作成</h2>
+                MyBaticを利用してデータベースにアクセスするためのインターフェースを作成する。
+                <table width=500>
+                    <tr>
+                        <th>項目名</th>
+                        <th>設定値</th>
+                    </tr>
+                    <tr>
+                        <td>ソースフォルダ</td>
+                        <td>turorial/src/main/java</td>
+                    </tr>
+                    <tr>
+                       <td>パッケージ</td>
+                       <td>com.example.tutorial.todo</td>
+                   </tr>
+                   <tr>
+                       <td>名前</td>
+                        <td>TodoRepository</td>
+                    </tr>
+                </table>
+                作成したインターフェースにデータベースを操作するためのメソッドを記述する。
+                <pre><code>
+                    package com.example.tutorial.todo;
+
+                    import java.util.Collection;
+                    import java.util.Optional;
+                    import org.apache.ibatis.annotations.Delete;
+                    import org.apache.ibatis.annotations.Insert;
+                    import org.apache.ibatis.annotations.Mapper;
+                    import org.apache.ibatis.annotations.Options;
+                    import org.apache.ibatis.annotations.Select;
+                    import org.apache.ibatis.annotations.Update;
+                    
+                    @Mapper // (1)
+                    public interface TodoRepository {
+                    
+                        @Select("SELECT todo_id, todo_title, finished, created_at FROM todo WHERE todo_id = #{todoId}") // (2)
+                        Optional<Todo> findById(Long todoId);
+                    
+                        @Select("SELECT todo_id, todo_title, finished, created_at FROM todo")
+                        Collection<Todo> findAll();
+                    
+                        @Insert("INSERT INTO todo(todo_title, finished, created_at) VALUES(#{todoTitle}, #{finished}, #{createdAt})")
+                        @Options(useGeneratedKeys = true, keyProperty = "todoId")
+                        void create(Todo todo);
+                    
+                        @Update("UPDATE todo SET finished = true WHERE todo_id = #{todoId}")
+                        long updateById(Long todoId);
+                    
+                        @Delete("DELETE FROM todo WHERE todo_id = #{todoId}")
+                        long deleteById(Long todoId);
+                    
+                        @Select("SELECT COUNT(*) FROM todo WHERE finished = #{finished}")
+                        long countByFinished(boolean finished);
+                    }
+                </code></pre>
+                上記コードはMyBaticを利用するためのアノテーションや型を利用することでデータ操作を実現している。
+                以下に各アノテーションについて記載する。
+                <table width=500>
+                    <tr>
+                        <th>項目名</th>
+                        <th>意味</th>
+                    </tr>
+                    <tr>
+                        <td>@Mapper</td>
+                        <td>MyBatisでリポジトリを作成する際は、インターフェースに@Mapperを記述する。MyBaticはJavaインターフェースとxmlファイルをマッピングすることでSQLをxmlファイルで管理することが出来るため、@Mapperを利用するが、今回はマッピングはせず、SQLをJavaインターフェースに直接書き込む。</td>
+                    </tr>
+                    <tr>
+                       <td>@Select</td>
+                       <td>Select文を記述する。Where句の対象に#{todoId}と記述があるが、これは、アノテーションが付与されたメソッドで返却されるオブジェクトのプロパティ名とマッピングされる。今回は作成済みのTodo.javaで定義したTodoクラスのプロパティとマッピングされている。なお、MyBaticのカラム名はスネークケースとなっているが、application.yamlでCamelCaseへの変換定義を行っている。</td>
+                   </tr>
+                   <tr>
+                    <td>@Options</td>
+                    <td>データ操作時のオプション設定を記述する。useGeneratedKeysは、データベース側で自動生成されたキーを自動取得する設定としている。取得されたキーはkeyPropertyに設定したプロパティ名で受け取ることができる。</td>
+                </tr>
+                </table>
+                <h2 id="testrepo"><a class="anchor" href="#testrepo"></a>5.6.3 Repositoryの単体テスト</h2>
+                SpringBoot提供のアノテーションを利用してテストを行う。
+                <ul>
+                    <h2 id="createinitdata"><a class="anchor" href="#createinitdata"></a>5.6.3.1 初期データの作成</h2>
+                    tutorial/src/test/resources配下にdata.sql(初期データ作成SQLファイル)を作成する。
+                    初期データは以下のSQL文で投入する。
+                    <pre><code>
+                        INSERT INTO todo (todo_title, finished, created_at ) VALUES ('sample todo 1', false, '2019-09-19 01:01:01' )
+                        INSERT INTO todo (todo_title, finished, created_at ) VALUES ('sample todo 2', true, '2019-09-19 02:02:02' )
+                        INSERT INTO todo (todo_title, finished, created_at ) VALUES ('sample todo 3', false, '2019-09-19 03:03:03' )                        
+                    </code></pre>
+                    <h2 id="createtest"><a class="anchor" href="#createtest"></a>5.6.3.2 SpringTestの標準機能を利用したテストの実装</h2>                    
+                    @MyBaticTestアノテーションを利用したRepositoryのスライステストのために、TodoRepositoryTestクラスを作成する。
+                    <br>
+                    (スライステストはテスト対象の動作に必要な最小限のBeanのみをDIしてテストする技法、、たぶん、、、)
+                    <br>
+                    <table width=500>
+                        <tr>
+                            <th>項目名</th>
+                            <th>設定値</th>
+                        </tr>
+                        <tr>
+                            <td>ソースフォルダ</td>
+                            <td>turorial/src/test/java</td>
+                        </tr>
+                        <tr>
+                           <td>パッケージ</td>
+                           <td>com.example.tutorial.todo</td>
+                       </tr>
+                       <tr>
+                           <td>名前</td>
+                            <td>TodoRepositoryTest</td>
+                        </tr>
+                    </table>
+                </ul>
+            </ul>            
 </ul>
 </body>
 </html>
