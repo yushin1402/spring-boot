@@ -23,14 +23,19 @@
 <li><a href="#createproj">2. プロジェクトの作成</a>
 <li><a href="#commitproj">3. プロジェクトのコミット</a>
 <li><a href="#importproj">4. プロジェクトのインポート</a>
-<li><a href="#createapi">4. REST APIの作成</a>
+<li><a href="#createapi">5. REST APIの作成</a>
 <ul>
-    <li><a href="#initset">4.1 初期設定</a>
+    <li><a href="#initset">5.1 初期設定</a>
     <ul>
-        <li><a href="#configurepom">4.1.1 pom.xmlの設定</a>
-        <li><a href="#configureyaml">4.1.2 application.yamlの設定</a>
+        <li><a href="#configurepom">5.1.1 pom.xmlの設定</a>
+        <li><a href="#configureyaml">5.1.2 application.yamlの設定</a>
     </ul>
+    <li><a href="#createpkg">5.2. パッケージのの作成</a>
+    <li><a href="#createsrcfld">5.3. ソースフォルダの作成</a>
+    <li><a href="#createtodo">5.4. Todoクラスの作成</a>
+    <li><a href="#createtodoresrc">5.5. TodoResourceクラスの作成</a>
 </ul>
+
 </div>
 </div>
 <div id="content">
@@ -124,7 +129,7 @@
                         </tr>
                         <tr>
                             <td>Package name</td>
-                            <td>com.exaple.com</td>
+                            <td>com.exaple.tutorial</td>
                             <td>パッケージ名</td>
                         </tr>
                         <tr>
@@ -270,11 +275,11 @@
                
     </ol>
 </ul>
-<h2 id="createapi"><a class="anchor" href="#createapi"></a>4. REST APIの作成</h2>
+<h2 id="createapi"><a class="anchor" href="#createapi"></a>5. REST APIの作成</h2>
 <ul>
-    <h3 id="initset"><a class="anchor" href="#initset"></a>4.1 初期設定</h2>
+    <h2 id="initset"><a class="anchor" href="#initset"></a>5.1 初期設定</h2>
     <ul>
-         <h3 id="configurepom"><a class="anchor" href="#configurepom"></a>4.1.1 pom.xmlの設定</h2>
+         <h3 id="configurepom"><a class="anchor" href="#configurepom"></a>5.1.1 pom.xmlの設定</h2>
         以下の定義をpom.xmlに設定する。
         <pre><code>
             &lt;dependency&gt;
@@ -296,7 +301,7 @@
         </code></pre>
     </ul>
     <ul>
-        <h3 id="configureyaml"><a class="anchor" href="#configureyaml"></a>4.1.2 application.ymlの設定</h2>  
+        <h2 id="configureyaml"><a class="anchor" href="#configureyaml"></a>5.1.2 application.ymlの設定</h2>  
             application.yamlでSpring Boot起動時に生成されるBeanの設定を変更することで、アプリケーションのプロパティ設定を行うことが出来る。
             ログ出力のプロパティ設定、トランザクションのプロパティ設定、データのプロパティ設定などを変更出来る。
             <br>
@@ -310,9 +315,183 @@
                     mapUnderscoreToCamelCase: true
             </code></pre>
     </ul>
-</ul>
+    <h2 id="createpkg"><a class="anchor" href="#createpkg"></a>5.2 パッケージの作成</h2>
+        以下の構成でパッケージを作成する。
+        <pre><code>
+            ├─src
+            │  ├─main
+            │  │  ├─java
+            │  │  │  └─com
+            │  │  │      └─example
+            │  │  │          └─tutorial              
+            │  │  │              ├─common             
+            │  │  │              │  └─exception      ←新規作成パッケージ
+            │  │  │              └─todo               ←新規作成パッケージ
+            │  └─test
+            │      └─java
+            │          └─com
+            │              └─example
+            │                  └─tutorial               
+            │                      └─todo              ←新規作成パッケージ
+            
+        </code></pre>
+        パッケージはSTSのパッケージエクスプローラ上でtutrialパッケージを右クリック→新規→パッケージと選択し、
+        パッケージ作成場所のフォルダとパッケージ名を指定して作成する。
+        パッケージ名は、フォルダ階層に合わせて指定する。(exceptionパッケージの場合は「com.example.tutorial.common.exeption」)
 
-</div>
-</div>
+        <h2 id="createsrcfld"><a class="anchor" href="#createsrcfld"></a>5.3 ソースフォルダの作成</h2>
+            テスト用の初期データを格納するソースフォルダを作成する。(プロジェクト名:tutorial、フォルダ名:src/test/resources)
+            <br>
+            ソースフォルダとはJavaのコードを格納するフォルダ。Javaの世界ではパッケージとソースフォルダを明に区別する。
+            <br>
+            <ul>
+            <li>パッケージ</li>
+            クラスをグループ化したもの。コンパイル時はパッケージの構成に従って、実行体が生成されていく理解。
+            <li>ソースフォルダ</li>
+            ソースをグループ化したもの。
+            <br>
+        </ul>
+            なお、パッケージもソースフォルダも実態はただのフォルダだが、STSやmavenは.classpathの記述内容を参照して区別している。
+            <pre><code>
+                &lt;classpathentry kind="src" output="target/classes" path="src/main/java"&gt;
+                    &lt;attributes&gt;
+                        &lt;attribute name="optional" value="true"/&gt;
+                        &lt;attribute name="maven.pomderived" value="true"/&gt;
+                    &lt;/attributes&gt;
+                &lt;/classpathentry&gt;
+            </code></pre> 
+            
+            今回作成したソースフォルダはテスト用ソースを格納するためのものである。Mavenビルド時にテストを実行させるため、
+            このフォルダをテスト用ソースフォルダとしてMavenに認識させる。手順は以下の通り。
+            <ol>
+                <li>STSの画面上のパッケージエクスプローラを右クリック</li>
+                <li>Maven(M)を選択</li>
+                <li>プロジェクトの更新を選択</li>
+                <li>src/test/resourcesにアイコンが追加されたことを確認</li>
+            </ol>
+            <h2 id="createtodo"><a class="anchor" href="#createtodo"></a>5.4 Todoクラスの作成</h2>
+            パッケージやソースフォルダを作成した方法と同じ要領でTodoクラスを作成する。
+             <table width=500>
+                 <tr>
+                     <th>項目名</th>
+                     <th>設定値</th>
+                 </tr>
+                 <tr>
+                     <td>Source Folder</td>
+                     <td>turorial/src/main/java</td>
+                 </tr>
+                 <tr>
+                    <td>Package</td>
+                    <td>com.example.tutorial.todo</td>
+                </tr>
+                <tr>
+                    <td>Name</td>
+                    <td>Todo</td>
+                </tr>
+                <tr>
+                    <td>interfaces</td>
+                    <td>java.io.Serializable</td>
+                </tr>
+             </table>
+             作成したTodo.javaは、～を生成するクラスとなる。このため、インターフェース情報を定義するプロパティと
+             プロパティにアクセスするSetterとGetterの実装が必要となる。また、プロパティの初期化を行うコンストラクタの実装も必要である。
+             <br>
+             これらの処理はLombok提供のアノテーションを記述するだけで実装可能。以下がサンプルコードとなる。
+             <pre><code>
+                package com.example.tutorial.todo;
+
+                import java.io.Serializable;
+                import java.time.LocalDateTime;
+                import lombok.AllArgsConstructor;
+                import lombok.Getter;
+                import lombok.NoArgsConstructor;
+                import lombok.Setter;
+                
+                @Getter //下記プロパティにアクセスするGetterメソッドをSpringBoot起動時に実装してくれる。
+                @Setter　//下記プロパティにアクセスするSettersメソッドをSpringBoot起動時に実装してくれる。
+                @AllArgsConstructor　//下記の全プロパティに初期値を設定するコンストラクタをSpringBoot起動時に実装してくれる。
+                @NoArgsConstructor　//引数なしのコンストラクタ(デフォルトコンストラクタ)を実装してくれる。
+                
+                public class Todo implements Serializable {
+                    private static final long serialVersionUID = 1L;　//この後実装するREST APIで利用するインターフェース値
+                 
+                    private Long todoId; //この後実装するREST APIで利用するインターフェース値
+                
+                    private String todoTitle;　//この後実装するREST APIで利用するインターフェース値
+                
+                    private boolean finished;　//この後実装するREST APIで利用するインターフェース値
+                
+                    private LocalDateTime createdAt;　//この後実装するREST APIで利用するインターフェース値
+                }
+               </code></pre>
+             <h2 id="createtodoresrc"><a class="anchor" href="#createtodoresrc"></a>5.5 TodoResourceクラスの作成</h2>
+             クライアントとの入出力に使用するインターフェースとして、TodoResourceクラスを作成する。
+             インターフェースのデータ表現形式にはJSONを利用する。TodoReourceクラスは、JSONを解析し、オブジェクト化する。
+             <table width=500>
+                <tr>
+                    <th>項目名</th>
+                    <th>設定値</th>
+                </tr>
+                <tr>
+                    <td>Source Folder</td>
+                    <td>turorial/src/main/java</td>
+                </tr>
+                <tr>
+                   <td>Package</td>
+                   <td>com.example.tutorial.todo</td>
+               </tr>
+               <tr>
+                   <td>Name</td>
+                   <td>TodoResource</td>
+               </tr>
+               <tr>
+                   <td>interfaces</td>
+                   <td>java.io.Serializable</td>
+               </tr>
+            </table>
+            以下のコードを記述する。なお、最新のmavenでは、javax.validationがインポートされていないため、pom.xmlに依存関係の定義を追加する必要がある。
+            <pre><code>
+                package com.example.tutorial.todo;
+
+                import java.io.Serializable;
+                import java.time.LocalDateTime;
+                import javax.validation.constraints.NotEmpty;
+                import javax.validation.constraints.Size;
+                import com.fasterxml.jackson.annotation.JsonFormat;
+                import lombok.AllArgsConstructor;
+                import lombok.Getter;
+                import lombok.NoArgsConstructor;
+                import lombok.Setter;
+                
+                @Getter
+                @Setter
+                @AllArgsConstructor
+                @NoArgsConstructor
+                public class TodoResource implements Serializable {
+                
+                    private static final long serialVersionUID = 1L;
+                
+                    private Long todoId;
+                
+                    @NotEmpty  // validationチェックのアノテーション。このクラスでクライアントからの入力をチェックし、エラー判定する。
+                    @Size(max = 30)　// validationチェックのアノテーション。このクラスでクライアントからの入力をチェックし、エラー判定する。
+                    private String todoTitle;
+                
+                    private boolean finished;
+                
+                    @JsonFormat(pattern = "uuuu/MM/dd HH:mm:ss")　// 日付フォーマットの指定。
+                    private LocalDateTime createdAt;
+                
+                }                
+            </code></pre>
+            pom.xmlに追加したコード
+            <pre><code>
+                &lt;dependency&gt;
+                    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+                    &lt;artifactId&gt;spring-boot-starter-validation&lt;/artifactId&gt;
+              &lt;/dependency&gt;
+            </code></pre>
+</ul>
 </body>
 </html>
+                             
