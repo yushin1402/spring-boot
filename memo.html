@@ -1602,8 +1602,14 @@ public class TodoControllerTest {
                         <td>リクエストURLをこのコントローラにマッピングしている。以降でメソッドごとのマッピングが定義され、中には引数が入っているものがあるが、これもURLであり、todos/todoIdで定義される。</td>
                     </tr>
                 </table>
-    
             </ul>            
+            <h2 id="execapp"><a class="anchor" href="#execapp"></a>7. アプリケーションの実行</h2>
+            SpringBootでアプリケーションを実行する。実行可能なJarを生成することで、アプリケーションを起動することが出来る。
+            プロンプトで以下を実行する。<br>
+            <code>mvn package</code><br>
+            上記コマンドで実行可能なJarが生成される。この中にはTomcatが内包されており、以下コマンドで実行するとアプリケーションが起動される。<br>
+            <code>java -jar target/tutorial-0.0.1-SNAPSHOT.jar</code><br>
+            あとは、RestAPICliectでAPIを実行し、動作確認をしてサンプルアプリの作成は終了となる。
 </ul>
 </body>
 </html>
