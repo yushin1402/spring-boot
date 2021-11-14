@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>turorial</artifactId>
+	<artifactId>tutorial</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>turorial</name>
+	<name>tutorial</name>
 	<description>Tutorial project for Spring Boot</description>
 	<properties>
 		<java.version>11</java.version>
@@ -56,6 +56,10 @@
 		<dependency>
   			<groupId>org.springframework.boot</groupId>
   			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+    		<groupId>org.springframework.boot</groupId>
+    		<artifactId>spring-boot-starter-jdbc</artifactId>
 		</dependency>
 	</dependencies>
 
