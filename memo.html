@@ -45,6 +45,8 @@
             <li><a href="#dotest">5.6.3.3 RepositoryTestの実行</a>
         </ul>
     </ul>
+    <li><a href="#createservice">5.7. Serviceクラスの作成</a>
+
 </ul>
 
 </div>
@@ -905,7 +907,702 @@
                         spring.datasource.initialization-mode=embedded
                     </code></pre>
                 </ul>
-                　　
+                <h2 id="createservice"><a class="anchor" href="#createservice"></a>5.7 Serviceの作成</h2>
+                Todoリソースの取得、登録、削除、完了を行う業務処理クラスを実装する。
+                <ul>
+                    <h3 id="createexception"><a class="anchor" href="#createexception"></a>5.7.1 例外処理クラスの作成</h3>
+                    BusinessExceptionクラスとResourceNotFoundExceptionクラスを作成する。
+                    <li>BusinesExceptionクラスの作成</li>
+                    <ul>
+                    <table width=500>
+                        <tr>
+                            <th>項目名</th>
+                            <th>設定値</th>
+                        </tr>
+                        <tr>
+                            <td>ソースフォルダ</td>
+                            <td>turorial/src/main/java</td>
+                        </tr>
+                        <tr>
+                           <td>パッケージ</td>
+                           <td>com.example.tutorial.common.exception</td>
+                       </tr>
+                       <tr>
+                           <td>名前</td>
+                            <td>BusinessException</td>
+                        </tr>
+                        <tr>
+                            <td>スーパークラス</td>
+                             <td>java.lang.RuntimeException</td>
+                         </tr>
+                    </table>
+                    <br>
+                    <pre><code>
+                        package com.example.tutorial.common.exception;
+
+                        import org.springframework.http.HttpStatus;
+                        import org.springframework.web.bind.annotation.ResponseStatus;
+                        
+                        @ResponseStatus(code = HttpStatus.CONFLICT)
+                        public class BusinessException extends RuntimeException {
+                        
+                            private static final long serialVersionUID = 1L;
+                        
+                            public BusinessException(String message) {
+                                super(message);
+                            }
+                        
+                            public BusinessException(String message, Throwable cause) {
+                                super(message, cause);
+                            }
+                        
+                        }
+                    </code></pre>
+                    <table width=500>
+                        <tr>
+                            <th>ポイント</th>
+                            <th>メモ</th>
+                        </tr>
+                        <tr>
+                            <td>@ResponseStatus</td>
+                            <td>引数を通してクライアントにHTTPステータスコードを返却するためのアノテーション。code = HttpStatus.CONFLICTで、409を返却する。一般的なステータスコード名と紐づいているよう。<a href="https://developer.mozilla.org/ja/docs/Web/HTTP/Status">ステータスコードについてはこちらを参照。</a></td>
+                        </tr>
+                        <tr>
+                            <td>java.lang.RuntimeExceptionを継承</td>
+                            <td>RuntimeExceptionはアプリを運用する中で起こる回復不要な例外をキャッチするクラス。<a href="https://programmer-life.work/java/runtime-exception-java">java.lang.RuntimeExceptionについてはこちらを参照。</a><br>
+                            super(message)で親クラスであるRuntimeExceptionのコンストラクタをmessageを引数にして呼び出している。<a href="https://docs.oracle.com/javase/jp/8/docs/api/java/lang/RuntimeException.html">java.lang.RuntimeExceptionで実装されているコンストラクタについてはこちらを参照。</a>
+                            </td>
+                        </tr>
+                    </table>
+                </ul>
+                    <li>ResourceNotFoundExceptionクラス</li>
+                    <ul>
+                    <table width=500>
+                        <tr>
+                            <th>項目名</th>
+                            <th>設定値</th>
+                        </tr>
+                        <tr>
+                            <td>ソースフォルダ</td>
+                            <td>turorial/src/main/java</td>
+                        </tr>
+                        <tr>
+                           <td>パッケージ</td>
+                           <td>com.example.tutorial.common.exception</td>
+                       </tr>
+                       <tr>
+                           <td>名前</td>
+                            <td>ResourceNotFoundException</td>
+                        </tr>
+                        <tr>
+                            <td>スーパークラス</td>
+                             <td>java.lang.RuntimeException</td>
+                        </tr>
+                    </table>
+                    特に留意事項はない。
+                </ul>
+                <h3 id="createserviceif"><a class="anchor" href="#createserviceif"></a>5.7.2 TodoServiceインターフェースの作成</h3>
+                インターフェースを以下の通り作成する。
+                <table width=500>
+                    <tr>
+                        <th>項目名</th>
+                        <th>設定値</th>
+                    </tr>
+                    <tr>
+                        <td>ソースフォルダ</td>
+                        <td>turorial/src/main/java</td>
+                    </tr>
+                    <tr>
+                       <td>パッケージ</td>
+                       <td>com.example.tutorial.todo</td>
+                   </tr>
+                   <tr>
+                       <td>名前</td>
+                        <td>TodoService</td>
+                    </tr>
+                </table>
+                <pre><code>
+                    package com.example.tutorial.todo;
+
+                    import java.util.Collection;
+                    
+                    public interface TodoService {
+                    
+                        Todo findOne(Long todoId);
+                    
+                        Collection<Todo> findAll();
+                    
+                        Todo create(Todo todo);
+                    
+                        Todo finish(Long todoId);
+                    
+                        void delete(Long todoId);
+                    }
+                </code></pre>
+                <table width=500>
+                    <tr>
+                        <th>ポイント</th>
+                        <th>メモ</th>
+                    </tr>
+                    <tr>
+                        <td>記述するメソッドについて</td>
+                        <td>後続で実装する業務処理である、検索、全件検索、作成、完了、削除のインターフェースを作成する。具体的なロジックの記載はimpl側に記載するので不要。なお、サービスをコントローラから呼び出す際はインターフェースを呼び出すことで、実装の改修に強いアプリの作りにするのが一般的。なぜ、実装側ではなくインターフェースを呼び出して動くのかは疑問。</td>
+                    </tr>
+                </table>
+                <h3 id="createserviceimpl"><a class="anchor" href="#createserviceimpl"></a>5.7.3 TodoServiceImplクラスの作成</h3>
+                クラスを以下の通り作成する。
+                <table width=500>
+                    <tr>
+                        <th>項目名</th>
+                        <th>設定値</th>
+                    </tr>
+                    <tr>
+                        <td>ソースフォルダ</td>
+                        <td>turorial/src/main/java</td>
+                    </tr>
+                    <tr>
+                       <td>パッケージ</td>
+                       <td>com.example.tutorial.todo</td>
+                   </tr>
+                   <tr>
+                       <td>名前</td>
+                        <td>TodoServiceImpl</td>
+                    </tr>
+                    <tr>
+                        <td>インターフェース</td>
+                         <td>com.example.tutorial.TodoService</td>
+                     </tr>
+                </table>
+                <pre><code>
+                    package com.example.tutorial.todo;
+
+                    import java.time.LocalDateTime;
+                    import java.util.Collection;
+                    import org.springframework.beans.factory.annotation.Autowired;
+                    import org.springframework.stereotype.Service;
+                    import org.springframework.transaction.annotation.Transactional;
+                    import com.example.tutorial.common.exception.BusinessException;
+                    import com.example.tutorial.common.exception.ResourceNotFoundException;
+                    
+                    @Service // (1)
+                    @Transactional // (2)
+                    public class TodoServiceImpl implements TodoService {
+                    
+                        private static final long MAX_UNFINISHED_COUNT = 5;
+                    
+                        @Autowired // (3)
+                        TodoRepository todoRepository;
+                    
+                        @Override
+                        public Todo findOne(Long todoId) {
+                            return todoRepository.findById(todoId).orElseThrow(() -> new ResourceNotFoundException(
+                                    "The requested Todo is not found. (id=" + todoId + ")"));
+                        }
+                    
+                        @Override
+                        public Collection<Todo> findAll() {
+                            return todoRepository.findAll();
+                        }
+                    
+                        @Override
+                        public Todo create(Todo todo) {
+                            long unfinishedCount = todoRepository.countByFinished(false);
+                            if (unfinishedCount >= MAX_UNFINISHED_COUNT) {
+                                throw new BusinessException(
+                                        "The count of un-finished Todo must not be over " + MAX_UNFINISHED_COUNT + ".");
+                            }
+                    
+                            LocalDateTime createdAt = LocalDateTime.now();
+                            todo.setCreatedAt(createdAt);
+                            todo.setFinished(false);
+                    
+                            todoRepository.create(todo);
+                            return todo;
+                        }
+                    
+                        @Override
+                        public Todo finish(Long todoId) {
+                            Todo todo = findOne(todoId);
+                            if (todo.isFinished()) {
+                                throw new BusinessException(
+                                        "The requested Todo is already finished. (id=" + todoId + ")");
+                            }
+                            todo.setFinished(true);
+                            todoRepository.updateById(todoId);
+                            return todo;
+                        }
+                    
+                        @Override
+                        public void delete(Long todoId) {
+                            findOne(todoId);
+                            todoRepository.deleteById(todoId);
+                        }
+                    
+                    }                </code></pre>
+                <table width=500>
+                    <tr>
+                        <th>ポイント</th>
+                        <th>メモ</th>
+                    </tr>
+                    <tr>
+                        <td>@Service</td>
+                        <td>サービスとしてBean登録するための記述。おそらくこの記述でSpringBootフレームワーク上でControllerからのマッピング処理などが可能になる理解</td>
+                    </tr>
+                    <tr>
+                        <td>@Transactional</td>
+                        <td>トランザクションを実行する宣言。ここの設定はいろいろあるが、割愛。</td>
+                    </tr>
+                    <tr>
+                        <td>他インスタンスとのデータのやり取り。</td>
+                        <td>Todoオブジェクトにデータを詰めて、他のオブジェクト(Repositoryなど)とデータをやり取りしている。Todo.javaはオブジェクト間のデータやりとりの形式を定義したリポジトリでTodoResourceクラスがクライアントとのデータのやり取りの形式を定義したクラスと理解。</td>
+                    </tr>
+                </table>
+                <h3 id="testservice"><a class="anchor" href="#testeservice"></a>5.7.4 Serviceの単体テスト</h3>
+                TodoServiceの単体テストを実施する。依存クラスがまだ完成していない場合に依存クラスのモック化を行う。<a href="https://qiita.com/Fudeko/items/301f8a80963dfcaafb80">モック化についてはこちらを参照。</a>
+                <br>
+                今回は作成済みではあるが練習のためにtodoRepsitoryをモック化するテストコードを記述する。これにより、todoRepositoryのロジックを利用せず、todoRepositoryのリターンを固定値として扱うことが出来る。
+                <table width=500>
+                    <tr>
+                        <th>項目名</th>
+                        <th>設定値</th>
+                    </tr>
+                    <tr>
+                        <td>ソースフォルダ</td>
+                        <td>turorial/src/test/java</td>
+                    </tr>
+                    <tr>
+                       <td>パッケージ</td>
+                       <td>com.example.tutorial.todo</td>
+                   </tr>
+                   <tr>
+                       <td>名前</td>
+                        <td>TodoServiceTest</td>
+                    </tr>
+                </table>
+                <pre><code>
+                    package com.example.tutorial.todo;
+
+                    import static org.assertj.core.api.Assertions.assertThat;
+                    import static org.mockito.BDDMockito.given;
+                    import static org.mockito.BDDMockito.then;
+                    import static org.mockito.BDDMockito.willDoNothing;
+                    import static org.mockito.Mockito.times;
+                    import java.time.LocalDateTime;
+                    import java.time.format.DateTimeFormatter;
+                    import java.util.Arrays;
+                    import java.util.Collection;
+                    import java.util.Objects;
+                    import java.util.Optional;
+                    import org.junit.jupiter.api.DisplayName;
+                    import org.junit.jupiter.api.Test;
+                    import org.mockito.ArgumentMatchers;
+                    import org.springframework.beans.factory.annotation.Autowired;
+                    import org.springframework.boot.test.context.SpringBootTest;
+                    import org.springframework.boot.test.mock.mockito.MockBean;
+                    
+                    @SpringBootTest(classes = TodoServiceImpl.class) // (1)
+                    public class TodoServiceTest {
+                    
+                        private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("uuuu/MM/dd HH:mm:ss");
+                    
+                        @Autowired
+                        private TodoService todoService; // (2)
+                    
+                        @MockBean
+                        private TodoRepository todoRepository; // (3)
+                    
+                        @Test
+                        @DisplayName("全Todoが取得できることを確認する(service)")
+                        void testFindAll() {
+                            // setup
+                            Todo expectTodo1 = new Todo(1L, "sample todo 1", false, LocalDateTime.parse("2019/09/19 01:01:01", DATETIME_FORMAT));
+                            Todo expectTodo2 = new Todo(2L, "sample todo 2", true, LocalDateTime.parse("2019/09/19 02:02:02", DATETIME_FORMAT));
+                            Todo expectTodo3 = new Todo(3L, "sample todo 3", false, LocalDateTime.parse("2019/09/19 03:03:03", DATETIME_FORMAT));
+                    
+                            // setup mocks
+                            given(todoRepository.findAll()).willReturn(Arrays.asList(expectTodo1, expectTodo2, expectTodo3));
+                    
+                            // run
+                            Collection<Todo> actualTodos = todoService.findAll();
+                    
+                            // check
+                            then(todoRepository).should(times(1)).findAll();
+                            assertThat(actualTodos).usingFieldByFieldElementComparator().containsExactly(expectTodo1, expectTodo2, expectTodo3);
+                        }
+                    
+                        @Test
+                        @DisplayName("todoIdに対応するTodoが取得できることを確認する(Service)")
+                        void testFindOne() {
+                            // setup
+                            Todo expectTodo = new Todo(1L, "sample todo 1", false, LocalDateTime.parse("2019/09/19 01:01:01", DATETIME_FORMAT));
+                    
+                            // setup mocks
+                            given(todoRepository.findById(1L)).willReturn(Optional.of(expectTodo));
+                    
+                            // run
+                            Todo actualTodo = todoService.findOne(1L);
+                    
+                            // check
+                            then(todoRepository).should(times(1)).findById(ArgumentMatchers.longThat(arg -> arg == actualTodo.getTodoId()));
+                            assertThat(actualTodo).isEqualToComparingFieldByField(expectTodo);
+                        }
+                    
+                        @Test
+                        @DisplayName("新たなTodoが作成できることを確認する(service)")
+                        void testCreate() {
+                            // setup
+                            Todo expectTodo = new Todo(null, "sample todo 4", false, null);
+                    
+                            // setup mocks
+                            willDoNothing().given(todoRepository).create(expectTodo);
+                    
+                            // run
+                            todoService.create(expectTodo);
+                    
+                            // check
+                            then(todoRepository).should(times(1)).create(
+                                    ArgumentMatchers.<Todo>argThat(
+                                            arg -> expectTodo.getTodoTitle().equals(arg.getTodoTitle())
+                                            && !arg.isFinished()
+                                            && Objects.nonNull(arg.getCreatedAt())
+                                            )
+                                    );
+                        }
+                    
+                        @Test
+                        @DisplayName("todoId=1のfinishedがtrueになることを確認する(service)")
+                        void testFinish() {
+                            // setup
+                            Todo expectTodo = new Todo(1L, "sample todo 1", false, LocalDateTime.parse("2019/09/19 01:01:01", DATETIME_FORMAT));
+                    
+                            // setup mocks
+                            given(todoRepository.findById(1L)).willReturn(Optional.of(expectTodo));
+                            given(todoRepository.updateById(1L)).willReturn(1L);
+                    
+                            // run
+                            todoService.finish(1L);
+                    
+                            // check
+                            then(todoRepository).should(times(1)).findById(ArgumentMatchers.longThat(arg -> arg == expectTodo.getTodoId()));
+                            then(todoRepository).should(times(1)).updateById(ArgumentMatchers.longThat(arg -> arg == 1L));
+                        }
+                    
+                        @Test
+                        @DisplayName("todoId=1がDeleteによって削除されることを確認する(service)")
+                        void testDelete() {
+                            // setup
+                            Todo expectTodo = new Todo(1L, "sample todo 1", false, LocalDateTime.parse("2019/09/19 01:01:01", DATETIME_FORMAT));
+                    
+                            // setup mocks
+                            given(todoRepository.findById(1L)).willReturn(Optional.of(expectTodo));
+                            given(todoRepository.deleteById(1L)).willReturn(1L);
+                    
+                            // run
+                            todoService.delete(1L);
+                    
+                            // check
+                            then(todoRepository).should(times(1)).findById(ArgumentMatchers.longThat(arg -> arg == expectTodo.getTodoId()));
+                            then(todoRepository).should(times(1)).deleteById(ArgumentMatchers.longThat(arg -> arg == 1L));
+                        }
+                    }
+                </code></pre>
+                <table width=500>
+                    <tr>
+                        <th>ポイント</th>
+                        <th>メモ</th>
+                    </tr>
+                    <tr>
+                        <td>@SpringBootTest(classes = TodoServiceImpl.class)</td>
+                        <td>SpringTestの実行対象のクラスを定義する。Repositoryのテストでは@MyBatisTestを指定したが、これはMyBatic専用のアノテーション。通常は@SpringBootTestを指定する。</td>
+                    </tr>
+                    <tr>
+                        <td>@MockBean</td>
+                        <td>モック化する依存クラスを指定する。今回はtodoRepositoryを指定。</td>
+                    </tr>
+                    <tr>
+                        <td>given(todoRepository.findAll()).willReturn(Arrays.asList(expectTodo1, expectTodo2, expectTodo3));</td>
+                        <td>モックの実装。todoRepository.findAll()が返却するであろう値をArrays.asList(expectTodo1, expectTodo2, expectTodo3)に固定化している。(実際のtodoRepositoryのロジックを利用しない。)</td>
+                    </tr>
+                </table>
+                <h3 id="doservicetest"><a class="anchor" href="#doservicetest"></a>5.7.5 TodoServiceのテスト実行</h3>
+                TodoService.javaを右クリックして、JUnitを実行する。オールグリーンになれば正常終了。(エラーは出ず、、、)
+                </ul>
+                <h2 id="createctl"><a class="anchor" href="#createctl"></a>6. Controllerクラスの作成</h2>
+                クラスを以下の通り作成する。
+                <table width=500>
+                    <tr>
+                        <th>項目名</th>
+                        <th>設定値</th>
+                    </tr>
+                    <tr>
+                        <td>ソースフォルダ</td>
+                        <td>turorial/src/main/java</td>
+                    </tr>
+                    <tr>
+                       <td>パッケージ</td>
+                       <td>com.example.tutorial.todo</td>
+                   </tr>
+                   <tr>
+                       <td>名前</td>
+                        <td>TodoContoroller</td>
+                    </tr>
+                </table>
+                <pre><code>
+                    package com.example.tutorial.todo;
+
+                    import java.util.Collection;
+                    import java.util.List;
+                    import java.util.stream.Collectors;
+                    import org.springframework.http.HttpStatus;
+                    import org.springframework.validation.annotation.Validated;
+                    import org.springframework.beans.factory.annotation.Autowired;
+                    import org.springframework.web.bind.annotation.DeleteMapping;
+                    import org.springframework.web.bind.annotation.GetMapping;
+                    import org.springframework.web.bind.annotation.PathVariable;
+                    import org.springframework.web.bind.annotation.PostMapping;
+                    import org.springframework.web.bind.annotation.PutMapping;
+                    import org.springframework.web.bind.annotation.RequestBody;
+                    import org.springframework.web.bind.annotation.RequestMapping;
+                    import org.springframework.web.bind.annotation.ResponseStatus;
+                    import org.springframework.web.bind.annotation.RestController;
+                    import com.github.dozermapper.core.Mapper;
+                    
+                    @RestController // (1)
+                    @RequestMapping("todos") // (2)
+                    public class TodoController {
+                    
+                        @Autowired // (3)
+                        TodoService todoService;
+                    
+                        @Autowired // (4)
+                        Mapper beanMapper;
+                    
+                        @GetMapping
+                        public List<TodoResource> getTodos() {
+                            Collection<Todo> todos = todoService.findAll();
+                            return todos.stream().map(todo -> beanMapper.map(todo, TodoResource.class))
+                                    .collect(Collectors.toList());
+                        }
+                    
+                        @GetMapping("{todoId}")
+                        public TodoResource getTodo(@PathVariable("todoId") Long todoId) {
+                            Todo todo = todoService.findOne(todoId);
+                            return beanMapper.map(todo, TodoResource.class);
+                        }
+                    
+                        @PostMapping
+                        @ResponseStatus(HttpStatus.CREATED)
+                        public TodoResource postTodo(@RequestBody @Validated TodoResource todoResource) {
+                            Todo createdTodo = todoService.create(beanMapper.map(todoResource, Todo.class));
+                            return beanMapper.map(createdTodo, TodoResource.class);
+                        }
+                    
+                        @PutMapping("{todoId}")
+                        public TodoResource putTodo(@PathVariable("todoId") Long todoId) {
+                            Todo finishedTodo = todoService.finish(todoId);
+                            return beanMapper.map(finishedTodo, TodoResource.class);
+                        }
+                    
+                        @DeleteMapping("{todoId}")
+                        @ResponseStatus(HttpStatus.NO_CONTENT)
+                        public void deleteTodo(@PathVariable("todoId") Long todoId) {
+                            todoService.delete(todoId);
+                        }
+                    
+                    }
+                </code></pre>
+                <table>
+                <tr>
+                    <th>ポイント</th>
+                    <th>メモ</th>
+                </tr>
+                <tr>
+                    <td>@RestController</td>
+                    <td>RestAPI用のコントローラアノテーション。これにより、クライアントからのアクセスを受付け、レスポンスボディにはJSONを埋め込むようになる。</td>
+                </tr>
+                <tr>
+                    <td>beanMapper.map(todo, TodoResource.class)</td>
+                    <td>各処理ではサービスから受け取ったtodoオブジェクトを取り扱うが、このままではクライアントに返却出来ないため、beanMapperにより、TodoResource.classに変換している。具体的には、todoオブジェクトのプロパティ名とTodoResource.classのプロパティ名をマッピングし、コピーしている。</td>
+                </tr>
+                <tr>
+                    <td>@RequestMapping("todos") </td>
+                    <td>リクエストURLをこのコントローラにマッピングしている。以降でメソッドごとのマッピングが定義され、中には引数が入っているものがあるが、これもURLであり、todos/todoIdで定義される。</td>
+                </tr>
+            </table>
+                Contorollerのテストのやり方はTodoServicとほぼ同じ(今回はTodoServiceをモック化)。以下に概要を記載する。
+                <ol>
+                    <li>TodoControllerTestを作成する。</li>
+                    <li>テストコードは以下の通り。
+                        <pre><code>
+                            package com.example.tutorial.todo;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
+import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Collection;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
+import com.github.dozermapper.core.Mapper;
+
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT) // (1)
+public class TodoControllerTest {
+
+    private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("uuuu/MM/dd HH:mm:ss");
+
+    @Autowired // (2)
+    private TestRestTemplate testRestTemplate;
+
+    @Autowired
+    private Mapper beanMapper;
+
+    @MockBean // (3)
+    private TodoService todoService;
+
+    @Test
+    @DisplayName("GET Todosが正常に動作することを確認する(Controller)")
+    void testGetTodos() {
+        // setup
+        Todo expectTodo1 = new Todo(1L, "sample todo 1", false, LocalDateTime.parse("2019/09/19 01:01:01", DATETIME_FORMAT));
+        Todo expectTodo2 = new Todo(2L, "sample todo 2", true, LocalDateTime.parse("2019/09/19 02:02:02", DATETIME_FORMAT));
+        Collection<Todo> expectTodos = Arrays.asList(expectTodo1, expectTodo2);
+        TodoResource[] expectTodoResources = expectTodos.stream()
+                .map(todo -> beanMapper.map(todo, TodoResource.class)).toArray(TodoResource[]::new);
+
+        // setup mocks
+        given(todoService.findAll()).willReturn(expectTodos);
+
+        // run
+        ResponseEntity<TodoResource[]> actualResponseEntity =
+                testRestTemplate.getForEntity("/todos", TodoResource[].class);
+
+        // check
+        then(todoService).should(times(1)).findAll();
+        assertThat(actualResponseEntity.getBody()).usingFieldByFieldElementComparator().containsExactly(expectTodoResources[0], expectTodoResources[1]);
+        assertThat(actualResponseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @DisplayName("GET Todoが正常に動作することを確認する(Controller)")
+    void testGetTodo(){
+        // setup
+        Todo expectTodo = new Todo(1L, "sample todo 1", false, LocalDateTime.parse("2019/09/19 01:01:01", DATETIME_FORMAT));
+        TodoResource expectTodoResource = beanMapper.map(expectTodo, TodoResource.class);
+
+        // setup mocks
+        given(this.todoService.findOne(1L)).willReturn(expectTodo);
+
+        // run
+        ResponseEntity<TodoResource> actualResponseEntity =
+                testRestTemplate.getForEntity("/todos/1", TodoResource.class);
+
+        // check
+        then(todoService).should(times(1)).findOne(ArgumentMatchers.longThat(arg -> arg == expectTodo.getTodoId()));
+        assertThat(actualResponseEntity.getBody()).isEqualToComparingFieldByField(expectTodoResource);
+        assertThat(actualResponseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @DisplayName("POST Todoが正常に動作することを確認する(Controller)")
+    void testPostTodo() {
+        // setup
+        TodoResource inputTodoResource = new TodoResource();
+        inputTodoResource.setTodoTitle("sample todo 4");
+        Todo inputTodo = beanMapper.map(inputTodoResource, Todo.class);
+        Todo expectTodo = new Todo(4L, "sample todo 4", false, LocalDateTime.parse("2019/09/19 04:04:04", DATETIME_FORMAT));
+        TodoResource expectTodoResource = beanMapper.map(expectTodo, TodoResource.class);
+
+        // setup mocks
+        given(this.todoService.create(any(Todo.class))).willReturn(expectTodo);
+
+        // run
+        ResponseEntity<TodoResource> actualResponseEntity =
+                testRestTemplate.postForEntity("/todos", inputTodoResource, TodoResource.class);
+
+        // check
+        then(todoService).should(times(1)).create(ArgumentMatchers.<Todo>argThat(arg -> inputTodo.getTodoTitle().equals(arg.getTodoTitle())));
+        assertThat(actualResponseEntity.getBody()).isEqualToComparingFieldByField(expectTodoResource);
+        assertThat(actualResponseEntity.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    }
+
+    @Test
+    @DisplayName("PUT Todoが正常に動作することを確認する(Controller)")
+    void testPutTodo() {
+        // setup
+        Todo expectTodo = new Todo(1L, "sample todo 1", true, LocalDateTime.parse("2019/09/19 01:01:01", DATETIME_FORMAT));
+        TodoResource expectTodoResource = beanMapper.map(expectTodo, TodoResource.class);
+
+        // setup mocks
+        given(this.todoService.finish(1L)).willReturn(expectTodo);
+
+        // run
+        RequestEntity<String> actualRequestEntity =
+                RequestEntity.put(URI.create("/todos/1")).body("");
+        ResponseEntity<TodoResource> actualResponseEntity =
+                testRestTemplate.exchange(actualRequestEntity, TodoResource.class);
+
+        // check
+        then(todoService).should(times(1)).finish(ArgumentMatchers.longThat(arg -> arg == expectTodo.getTodoId()));
+        assertThat(actualResponseEntity.getBody()).isEqualToComparingFieldByField(expectTodoResource);
+        assertThat(actualResponseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @DisplayName("DELETE Todoが正常に動作することを確認する(Controller)")
+    void testDeleteTodo() {
+        // run
+        ResponseEntity<String> actualResponseEntity =
+                testRestTemplate.exchange("/todos/1", HttpMethod.DELETE, HttpEntity.EMPTY, String.class);
+
+        // check
+        then(todoService).should(times(1)).delete(ArgumentMatchers.longThat(arg -> arg == 1L));
+        assertThat(actualResponseEntity.getBody()).isNull();
+        assertThat(actualResponseEntity.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+}
+                        </code></pre>
+                    </li>
+                </ol>
+                <table>
+                    <tr>
+                        <th>ポイント</th>
+                        <th>メモ</th>
+                    </tr>
+                    <tr>
+                        <td>アロー関数</td>
+                        <td>todo -> beanMapper.map(todo, TodoResource.class)).toArray(TodoResource[]::new)の記述はおそらくJavaScriptのアロー関数と同じ記法(Javaではラムダ式というらしい)<br>
+                        クラス名::newの記述でコンストラクタを参照している。<a href="https://www.sejuku.net/blog/22592">こちらを参照。</a><br>
+                        今回はTodoResourceのコンストラクタを生成し、toArrayの引数に渡すことで、TodoResource.classにマッピングされたexceptTodosコレクション内の要素からTodoResourceオブジェクトで構成されるAllayを生成している。
+                        わざわざAllayにしているのはこの後のassertThatで期待結果(expectTodoResources)と実際の結果(actualResponseEntity.getBody())を比較する際にactualResponseEntity.getBody()がtestRestTemplateの仕様でAllayに格納されているからと理解。
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>beanMapper.map(todo, TodoResource.class)</td>
+                        <td>各処理ではサービスから受け取ったtodoオブジェクトを取り扱うが、このままではクライアントに返却出来ないため、beanMapperにより、TodoResource.classに変換している。具体的には、todoオブジェクトのプロパティ名とTodoResource.classのプロパティ名をマッピングし、コピーしている。</td>
+                    </tr>
+                    <tr>
+                        <td>@RequestMapping("todos") </td>
+                        <td>リクエストURLをこのコントローラにマッピングしている。以降でメソッドごとのマッピングが定義され、中には引数が入っているものがあるが、これもURLであり、todos/todoIdで定義される。</td>
+                    </tr>
+                </table>
+    
             </ul>            
 </ul>
 </body>
